@@ -1,0 +1,51 @@
+﻿# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+build/
+coverage/
+*.apk
+*.aab
+
+# Android / iOS local settings
+**/android/local.properties
+**/android/key.properties
+*.jks
+*.keystore
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+
+# Spring Boot / Maven
+**/target/
+**/.gradle/
+
+# IDE
+.idea/
+**/.idea/
+.vscode/
+**/.vscode/
+*.iml
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+**/application-local.properties
+**/application-secret.properties
+**/application-secrets.properties
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Temporary and backup files
+*.bkp
+git-status-check.txt
+
+# Flutter local metadata
+**/.metadata
