@@ -338,3 +338,290 @@ SELECT 'devices', COUNT(*) FROM dbo.devices
 
 UNION ALL
 SELECT 'sensors', COUNT(*) FROM dbo.sensors;
+
+
+/*Kiểm tra thông tin*/
+SELECT
+    fk.name AS ForeignKeyName,
+    OBJECT_NAME(fk.parent_object_id) AS TableName,
+    COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS ColumnName
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fkc
+    ON fk.object_id = fkc.constraint_object_id
+WHERE fk.referenced_object_id = OBJECT_ID('dbo.rooms');
+
+
+SELECT
+    r.id,
+    r.name,
+    (SELECT COUNT(*)
+     FROM dbo.iot_nodes n
+     WHERE n.room_id = r.id) AS SoESP32,
+    (SELECT COUNT(*)
+     FROM dbo.devices d
+     WHERE d.room_id = r.id) AS SoThietBi,
+    (SELECT COUNT(*)
+     FROM dbo.sensors s
+     WHERE s.room_id = r.id) AS SoCamBien
+FROM dbo.rooms r
+ORDER BY r.id;
+
+
+USE SmartHomeDB;
+GO
+
+SELECT
+    t.name AS TableName,
+    c.column_id AS ColumnOrder,
+    c.name AS ColumnName,
+    ty.name AS DataType,
+    CASE
+        WHEN pk.column_id IS NOT NULL THEN 'PK'
+        ELSE ''
+    END AS PrimaryKey,
+    CASE
+        WHEN c.is_nullable = 1 THEN 'YES'
+        ELSE 'NO'
+    END AS IsNullable
+FROM sys.tables t
+JOIN sys.columns c
+    ON c.object_id = t.object_id
+JOIN sys.types ty
+    ON ty.user_type_id = c.user_type_id
+LEFT JOIN (
+    SELECT ic.object_id, ic.column_id
+    FROM sys.indexes i
+    JOIN sys.index_columns ic
+        ON i.object_id = ic.object_id
+       AND i.index_id = ic.index_id
+    WHERE i.is_primary_key = 1
+) pk
+    ON pk.object_id = c.object_id
+   AND pk.column_id = c.column_id
+ORDER BY t.name, c.column_id;
+
+SELECT
+    fk.name AS ForeignKeyName,
+    OBJECT_NAME(fkc.parent_object_id) AS FromTable,
+    pc.name AS FromColumn,
+    OBJECT_NAME(fkc.referenced_object_id) AS ToTable,
+    rc.name AS ToColumn
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fkc
+    ON fk.object_id = fkc.constraint_object_id
+JOIN sys.columns pc
+    ON pc.object_id = fkc.parent_object_id
+   AND pc.column_id = fkc.parent_column_id
+JOIN sys.columns rc
+    ON rc.object_id = fkc.referenced_object_id
+   AND rc.column_id = fkc.referenced_column_id
+ORDER BY FromTable, ForeignKeyName;
+
+
+USE SmartHomeDB;
+
+SELECT
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'devices'
+ORDER BY ORDINAL_POSITION;
+
+
+USE SmartHomeDB;
+
+SELECT
+    id,
+    room_id,
+    node_id,
+    name,
+    type,
+    status,
+    mqtt_channel
+FROM devices
+ORDER BY room_id, id;
+
+
+USE SmartHomeDB;
+
+SELECT
+    id,
+    name,
+    status
+FROM devices
+ORDER BY id;
+
+USE SmartHomeDB;
+
+SELECT
+    id,
+    name,
+    type,
+    status
+FROM devices
+ORDER BY id;
+
+USE SmartHomeDB;
+
+SELECT
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    CHARACTER_MAXIMUM_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'users'
+ORDER BY ORDINAL_POSITION;
+
+USE SmartHomeDB;
+
+ALTER TABLE users
+ADD role VARCHAR(20) NOT NULL
+    CONSTRAINT DF_users_role DEFAULT 'USER';
+
+ALTER TABLE users
+ADD CONSTRAINT CK_users_role
+CHECK (role IN ('ADMIN', 'USER'));
+
+USE SmartHomeDB;
+
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'users'
+  AND COLUMN_NAME = 'role';
+
+  USE SmartHomeDB;
+GO
+
+ALTER TABLE users
+ADD role VARCHAR(20) NOT NULL
+    CONSTRAINT DF_users_role DEFAULT 'USER';
+GO
+
+ALTER TABLE users
+ADD CONSTRAINT CK_users_role
+CHECK (role IN ('ADMIN', 'USER'));
+GO
+
+
+
+/*USE SmartHomeDB;
+GO
+
+INSERT INTO dbo.users (
+    full_name,
+    email,
+    password_hash,
+    role,
+    created_at
+)
+VALUES (
+    N'Quản trị viên',
+    'proem98@gmail.com',
+    '$2a$10$GiCsyYSmZQtidCzhBW65XeuqHGLOMrLyxUavcG/nuqLPP.rrJ5siG ',
+    'ADMIN',
+    SYSDATETIME()
+);
+
+SELECT id, full_name, email, role, created_at
+FROM dbo.users
+WHERE role = 'ADMIN';*/
+
+USE SmartHomeDB;
+GO
+
+SELECT
+    id,
+    email,
+    role,
+    LEN(password_hash) AS hash_length,
+    LEFT(password_hash, 4) AS hash_prefix
+FROM dbo.users
+WHERE role = 'ADMIN';
+
+
+USE SmartHomeDB;
+GO
+
+SELECT
+    id,
+    LEN(password_hash) AS hash_length,
+    DATALENGTH(password_hash) AS byte_length,
+    CASE
+        WHEN password_hash COLLATE Latin1_General_BIN2
+             LIKE '$2a$[0-9][0-9]$%'
+         AND LEN(password_hash) = 60
+         AND SUBSTRING(password_hash, 8, 53)
+             COLLATE Latin1_General_BIN2
+             NOT LIKE '%[^./A-Za-z0-9]%'
+        THEN 'FORMAT_OK'
+        ELSE 'FORMAT_INVALID'
+    END AS bcrypt_format
+FROM dbo.users
+WHERE role = 'ADMIN';
+
+
+USE SmartHomeDB;
+GO
+
+SELECT
+    id,
+    DATALENGTH(password_hash) AS before_bytes,
+    DATALENGTH(RTRIM(password_hash)) AS after_bytes
+FROM dbo.users
+WHERE role = 'ADMIN';
+
+
+UPDATE dbo.users
+SET password_hash = RTRIM(password_hash)
+WHERE role = 'ADMIN'
+  AND DATALENGTH(password_hash) >
+      DATALENGTH(RTRIM(password_hash));
+
+
+
+USE SmartHomeDB;
+GO
+
+UPDATE dbo.users
+SET password_hash = '$2a$10$SXRKv/gX12ivMg1XyH2ovump3DIp3nGw7UEfiMGGtqyH6zUkvERBy'
+WHERE id = 1
+  AND role = 'ADMIN';
+
+SELECT
+    id,
+    role,
+    LEN(password_hash) AS hash_length,
+    DATALENGTH(password_hash) AS byte_length,
+    LEFT(password_hash, 4) AS hash_prefix
+FROM dbo.users
+WHERE id = 1;
+
+
+
+USE SmartHomeDB;
+GO
+
+INSERT INTO dbo.users (
+    full_name,
+    email,
+    password_hash,
+    role,
+    created_at
+)
+VALUES (
+    N'Người dùng kiểm thử',
+    'user.test@smarthome.local',
+    '$2a$10$MfS/gzjCORuOGRJNKN6rQeigmAbniTpZ97pCotnX7CDmq6gxFH1FG',
+    'USER',
+    SYSDATETIME()
+);
+
+SELECT
+    id,
+    email,
+    role,
+    LEN(password_hash) AS hash_length,
+    DATALENGTH(password_hash) AS byte_length
+FROM dbo.users
+WHERE email = 'user.test@smarthome.local';
