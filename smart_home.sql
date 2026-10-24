@@ -625,3 +625,45 @@ SELECT
     DATALENGTH(password_hash) AS byte_length
 FROM dbo.users
 WHERE email = 'user.test@smarthome.local';
+
+
+SELECT
+    id,
+    home_id,
+    created_by,
+    code,
+    expires_at,
+    used_at
+FROM dbo.home_invitations
+ORDER BY id DESC;
+
+
+SELECT
+    hm.id,
+    u.full_name,
+    u.email,
+    hm.home_id,
+    h.name AS home_name,
+    hm.joined_at
+FROM dbo.home_members hm
+JOIN dbo.users u ON hm.user_id = u.id
+JOIN dbo.homes h ON hm.home_id = h.id
+ORDER BY hm.id DESC;
+
+
+/*test ma het han*/
+UPDATE dbo.home_invitations
+SET expires_at = DATEADD(HOUR, -1, SYSUTCDATETIME())
+WHERE code = 'BVCSRNBMLXQP'
+  AND used_at IS NULL;
+
+  USE SmartHomeDB;
+GO
+
+SELECT
+    id,
+    room_id,
+    node_code,
+    status,
+    last_seen_at
+FROM dbo.iot_nodes;

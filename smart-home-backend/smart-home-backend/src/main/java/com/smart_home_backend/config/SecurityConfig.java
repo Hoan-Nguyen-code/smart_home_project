@@ -76,10 +76,13 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // Cho phép đăng nhập không cần JWT
+
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/auth/login"
+                                "/api/auth/login",
+                                "/api/auth/register"
                         ).permitAll()
+
 
                         // Chỉ ADMIN được thêm, sửa, xóa phòng
                         .requestMatchers(
@@ -130,6 +133,15 @@ public class SecurityConfig {
                                 "/api/devices/**"
                         ).hasAnyRole("ADMIN", "USER")
 
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/home-invitations/join"
+                        ).hasRole("USER")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/home-invitations"
+                        ).hasRole("ADMIN")
                         // Những API chưa khai báo quyền vẫn cần đăng nhập
                         .anyRequest().authenticated()
                 )

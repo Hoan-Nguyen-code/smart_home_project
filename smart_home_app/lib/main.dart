@@ -7,6 +7,7 @@ import 'services/auth_session.dart';
 import 'models/room.dart';
 import 'screens/device_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/create_invitation_screen.dart';
 
 void main() {
   runApp(const SmartHomeApp());
@@ -375,11 +376,27 @@ class _RoomScreenState extends State<RoomScreen> {
         ),
         backgroundColor: Colors.blue.shade100,
         actions: [
+          // Chỉ ADMIN được hiển thị nút tạo mã mời.
+          if (AuthSession.isAdmin)
+            IconButton(
+              tooltip: 'Tạo mã mời tham gia nhà',
+              icon: const Icon(Icons.vpn_key_outlined),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const CreateInvitationScreen(),
+                  ),
+                );
+              },
+            ),
+
           IconButton(
             tooltip: 'Tải lại danh sách phòng',
             onPressed: reloadRooms,
             icon: const Icon(Icons.refresh),
           ),
+
           IconButton(
             tooltip: 'Đăng xuất',
             onPressed: logout,

@@ -7,7 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpHeaders;
+
 import java.util.Map;
 
 @RestControllerAdvice
@@ -50,4 +50,23 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+            IllegalArgumentException ex) {
+
+        String message = ex.getMessage() != null
+                ? ex.getMessage()
+                : "Dữ liệu không hợp lệ";
+
+        HttpStatus status = "Email đã được sử dụng".equals(message)
+                ? HttpStatus.CONFLICT
+                : HttpStatus.BAD_REQUEST;
+
+        return ResponseEntity
+                .status(status)
+                .body(Map.of(
+                        "status", status.value(),
+                        "message", message
+                ));
+    }
 }
